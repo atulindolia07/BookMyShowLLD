@@ -188,6 +188,10 @@ class Show{
             bookedSeatsId.push_back(seat);
         }
 
+        void setListOfSeatsBooked(list<int> bookedSeats){
+            this->bookedSeatsId = bookedSeats;
+        }
+
         list<int> getListOfSeatsBooked(){
             return bookedSeatsId;
         } 
@@ -241,6 +245,10 @@ class Theatre{
 
         list<Screen> getScreens(){
             return screen;
+        }
+
+        bool operator<(const Theatre& other) const {
+            return this->threaterId < other.threaterId;
         }
 };
 
@@ -324,65 +332,6 @@ class BookMyShow{
 
         }
 
-        void initialize(){
-            createMovies();
-            createTheater();
-        }
-
-        void createBooking(City userCity, string movieName){
-            //search movie by name and city
-            list<Movie> moviesList = movieController.getMovieByCity(userCity);
-
-            Movie interestedMovie;
-            //getting interested movie
-            for(auto movie : moviesList){
-                if(movie.getMovieName()==movieName){
-                    interestedMovie = movie;
-                    break;
-                }
-            }
-
-            //list of all theater in which interested movie
-            map<Theatre,list<Show>> listOfShows = theaterController.getAllShow(interestedMovie,userCity);
-            Show interestedShow;
-
-            for(auto it : listOfShows){
-                if(!it.second.empty()){
-                    interestedShow = it.second.front();
-                }
-
-                break;
-            }
-
-            int seatIdRequiredToBook = 30;
-
-            list<int> listOfBookedSeats = interestedShow.getListOfSeatsBooked();
-
-            auto it = std::find(listOfBookedSeats.begin(),listOfBookedSeats.end(),seatIdRequiredToBook);
-
-            if(it==listOfBookedSeats.end()){
-                listOfBookedSeats.push_back(seatIdRequiredToBook);
-
-                Booking booking;
-
-                list<Seat> myBookedSeats;
-                for(Seat seat : interestedShow.getScreen().getSeats()){
-                    if(seat.getSeatId()==seatIdRequiredToBook){
-                        myBookedSeats.push_back(seat);
-                    }
-                }
-
-                booking.setBookedSeats(myBookedSeats);
-                booking.setShow(interestedShow);
-            } else{
-                std::cout<<"Seat already booked!"<<std::endl;
-                return;
-            }
-
-            std::cout<<"Booking Successful"<<std::endl;
-
-        }
-
         void createTheater(){
             Movie avenger = movieController.getMovieByName("Avenger");
             Movie starWars = movieController.getMovieByName("Star Wars");
@@ -395,10 +344,11 @@ class BookMyShow{
 
             Show shreeFirstShow = createShows(1, avenger, shreeTalkies.getScreens().front(), 9);
             Show shreeSecondShow = createShows(2, starWars, shreeTalkies.getScreens().front(), 13);
-
+            
             shreeShows.push_back(shreeFirstShow);
             shreeShows.push_back(shreeSecondShow);
             shreeTalkies.setShows(shreeShows);
+            
 
             Theatre pvrTheater;
             pvrTheater.setCity(City::Noida);
@@ -485,18 +435,95 @@ class BookMyShow{
             scr.setScreenId(1);
             list<Seat> seats;
             scr.setSeats(seats);
+            
+            screens.push_back(scr);
 
             return screens;
         }
+
+        void createBooking(City userCity, string movieName){
+            //search movie by name and city
+            list<Movie> moviesList = movieController.getMovieByCity(userCity);
+
+            for(auto movies : moviesList){
+                cout<<movies.getMovieName()<<" ";
+            }
+
+            cout<<endl;
+
+            Movie interestedMovie;
+            //getting interested movie
+            for(auto movie : moviesList){
+                if(movie.getMovieName()==movieName){
+                    interestedMovie = movie;
+                    cout<<movieName<<endl;
+                    break;
+                }
+            }
+
+            //list of all theater in which interested movie
+            map<Theatre,list<Show>> listOfShows = theaterController.getAllShow(interestedMovie,userCity);
+            Show interestedShow;
+
+            for(auto it : listOfShows){
+                if(!it.second.empty()){
+                    interestedShow = it.second.front();
+                    cout<<interestedShow.getShowId()<<endl;
+                }
+
+                break;
+            }
+
+            int seatIdRequiredToBook = 30;
+
+            list<int> listOfBookedSeats = interestedShow.getListOfSeatsBooked();
+
+            for(auto id :  listOfBookedSeats){
+                cout<<id<<" ";
+            }
+
+            cout<<endl;
+
+            auto it = std::find(listOfBookedSeats.begin(),listOfBookedSeats.end(),seatIdRequiredToBook);
+
+            if(it==listOfBookedSeats.end()){
+                listOfBookedSeats.push_back(seatIdRequiredToBook);
+                // interestedShow.setListOfSeatsBooked(listOfBookedSeats);
+                
+
+                Booking booking;
+
+                list<Seat> myBookedSeats;
+                for(Seat seat : interestedShow.getScreen().getSeats()){
+                    if(seat.getSeatId()==seatIdRequiredToBook){
+                        myBookedSeats.push_back(seat);
+                    }
+                }
+
+                booking.setBookedSeats(myBookedSeats);
+                booking.setShow(interestedShow);
+            } else{
+                std::cout<<"Seat already booked!"<<std::endl;
+                return;
+            }
+
+            std::cout<<"Booking Successful"<<std::endl;
+
+        }
+        
+        void initialize(){
+            createMovies();
+            createTheater();
+        }
+
 };
 
 
 int main(){
-
     BookMyShow bookMyShow;
     bookMyShow.initialize();
     bookMyShow.createBooking(City::Agra,"Avenger");
-
+    bookMyShow.createBooking(City::Agra,"Avenger");
 
     return 0;
 }
