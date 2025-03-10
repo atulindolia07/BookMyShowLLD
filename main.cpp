@@ -7,8 +7,8 @@
 using namespace std;
 
 enum class City{
-    Delhi,
-    Noida
+    Noida,
+    Agra
 };
 
 enum class SeatCategory{
@@ -40,11 +40,11 @@ class Movie{
             this->movieName = name;
         }
 
-        int setMovieDurationInMin(){
+        int getMovieDurationInMin(){
             return this->movieDurationInMin;
         }
 
-        void getMovieDurationInMin(int duration){
+        void setMovieDurationInMin(int duration){
             this->movieDurationInMin = duration;
         }
 };
@@ -312,7 +312,22 @@ class BookMyShow{
         }
 
         void createMovies(){
-            
+            Movie avenger;
+            avenger.setMovieId(1);
+            avenger.setMovieName("Avenger");
+            avenger.setMovieDurationInMin(180);
+
+            Movie starWars;
+            starWars.setMovieId(2);
+            starWars.setMovieName("Star Wars");
+            starWars.setMovieDurationInMin(170);
+
+            movieController.addMovie(avenger, City::Noida);
+            movieController.addMovie(avenger, City::Agra);
+
+            movieController.addMovie(starWars, City::Agra);
+            movieController.addMovie(starWars, City::Noida);
+
         }
 };
 
