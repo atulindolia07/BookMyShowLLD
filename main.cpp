@@ -1,8 +1,8 @@
 #include<iostream>
-#include<unordered_map>
 #include<map>
 #include<list>
 #include <string>
+#include <algorithm>
 
 using namespace std;
 
@@ -51,12 +51,12 @@ class Movie{
 
 class MoviesController {
     private:
-        unordered_map<City,list<Movie>> moviesListByCity;
+        map<City,list<Movie>> moviesListByCity;
         list<Movie> allMovies;
 
     public:
 
-        MoviesController(unordered_map<City,list<Movie>> &CityVsMovie, list<Movie> &allMovies){
+        MoviesController(map<City,list<Movie>> &CityVsMovie, list<Movie> &allMovies){
             this->moviesListByCity = CityVsMovie;
             this->allMovies = allMovies;
         }
@@ -72,14 +72,15 @@ class MoviesController {
             return moviesListByCity[city];
         }
 
-        Movie* getMovieByName(string name){
+        Movie getMovieByName(string name){
             for(auto movie : allMovies){
                 if(movie.getMovieName()==name){
-                    return &movie;
+                    return movie;
                 }
             }
 
-            return nullptr;
+            Movie movie;
+            return movie;
         }
 };
 
@@ -179,6 +180,10 @@ class Show{
             screen = scrn;
         }
 
+        Screen getScreen(){
+            return screen;
+        }
+
         void bookSeat(int seat){
             bookedSeatsId.push_back(seat);
         }
@@ -210,12 +215,16 @@ class Theatre{
             this->address = address;
         }
 
+        string getTheaterAddress(){
+            return address;
+        }
+
         void setCity(City city){
             this->city = city;
         }
 
         City getCity(){
-            this->city;
+            return this->city;
         }
 
         void setShows(list<Show> &show){
@@ -229,11 +238,15 @@ class Theatre{
         void setScreens(list<Screen> screens){
             this->screen = screens;
         }
+
+        list<Screen> getScreens(){
+            return screen;
+        }
 };
 
 class TheaterController{
     private:
-        unordered_map<City, list<Theatre>> cityVsTheater;
+        map<City, list<Theatre>> cityVsTheater;
         list<Theatre> allTheater;
     
     public:
@@ -311,6 +324,141 @@ class BookMyShow{
 
         }
 
+        void initialize(){
+            createMovies();
+            createTheater();
+        }
+
+        void createBooking(City userCity, string movieName){
+            //search movie by name and city
+            list<Movie> moviesList = movieController.getMovieByCity(userCity);
+
+            Movie interestedMovie;
+            //getting interested movie
+            for(auto movie : moviesList){
+                if(movie.getMovieName()==movieName){
+                    interestedMovie = movie;
+                    break;
+                }
+            }
+
+            //list of all theater in which interested movie
+            map<Theatre,list<Show>> listOfShows = theaterController.getAllShow(interestedMovie,userCity);
+            Show interestedShow;
+
+            for(auto it : listOfShows){
+                if(!it.second.empty()){
+                    interestedShow = it.second.front();
+                }
+
+                break;
+            }
+
+            int seatIdRequiredToBook = 30;
+
+            list<int> listOfBookedSeats = interestedShow.getListOfSeatsBooked();
+
+            auto it = std::find(listOfBookedSeats.begin(),listOfBookedSeats.end(),seatIdRequiredToBook);
+
+            if(it==listOfBookedSeats.end()){
+                listOfBookedSeats.push_back(seatIdRequiredToBook);
+
+                Booking booking;
+
+                list<Seat> myBookedSeats;
+                for(Seat seat : interestedShow.getScreen().getSeats()){
+                    if(seat.getSeatId()==seatIdRequiredToBook){
+                        myBookedSeats.push_back(seat);
+                    }
+                }
+
+                booking.setBookedSeats(myBookedSeats);
+                booking.setShow(interestedShow);
+            } else{
+                std::cout<<"Seat already booked!"<<std::endl;
+                return;
+            }
+
+            std::cout<<"Booking Successful"<<std::endl;
+
+        }
+
+        void createTheater(){
+            Movie avenger = movieController.getMovieByName("Avenger");
+            Movie starWars = movieController.getMovieByName("Star Wars");
+
+            Theatre shreeTalkies;
+            shreeTalkies.setCity(City::Agra);
+            shreeTalkies.setTheaterId(1);
+            shreeTalkies.setScreens(createScreens());
+            list<Show> shreeShows;
+
+            Show shreeFirstShow = createShows(1, avenger, shreeTalkies.getScreens().front(), 9);
+            Show shreeSecondShow = createShows(2, starWars, shreeTalkies.getScreens().front(), 13);
+
+            shreeShows.push_back(shreeFirstShow);
+            shreeShows.push_back(shreeSecondShow);
+            shreeTalkies.setShows(shreeShows);
+
+            Theatre pvrTheater;
+            pvrTheater.setCity(City::Noida);
+            pvrTheater.setTheaterId(1);
+            pvrTheater.setScreens(createScreens());
+            list<Show> pvrShows;
+
+            Show pvrFirstShow = createShows(1, avenger, pvrTheater.getScreens().front(), 9);
+            Show pvrSecondShow = createShows(2, starWars, pvrTheater.getScreens().front(), 13);
+
+            pvrShows.push_back(pvrFirstShow);
+            pvrShows.push_back(pvrSecondShow);
+            pvrTheater.setShows(pvrShows);
+
+
+            theaterController.addTheater(pvrTheater, City::Noida);
+            theaterController.addTheater(shreeTalkies, City::Agra);
+
+        }
+
+        list<Seat> createSeats(){
+            list<Seat> seats;
+
+            //silver seats
+            for(int i=0;i<40;i++){
+                Seat seat;
+                seat.setSeatId(i);
+                seat.setSeatCategory(SeatCategory::Silver);
+                seats.push_back(seat);
+            }
+
+            //gold seats
+            for(int i=40;i<70;i++){
+                Seat seat;
+                seat.setSeatId(i);
+                seat.setSeatCategory(SeatCategory::Gold);
+                seats.push_back(seat);
+            }
+
+            //platinum seats
+            for(int i=70;i<100;i++){
+                Seat seat;
+                seat.setSeatId(i);
+                seat.setSeatCategory(SeatCategory::Platinum);
+                seats.push_back(seat);
+            }
+
+            return seats;
+        }
+
+        Show createShows(int showId, Movie movie, Screen screen, int showStartTime){
+            Show show;
+            show.setShowId(showId);
+            show.setMovie(movie);
+            show.setScreen(screen);
+            show.setStartTime(showStartTime);
+
+            return show;
+        }
+
         void createMovies(){
             Movie avenger;
             avenger.setMovieId(1);
@@ -329,15 +477,25 @@ class BookMyShow{
             movieController.addMovie(starWars, City::Noida);
 
         }
+
+        list<Screen> createScreens(){
+            list<Screen> screens;
+
+            Screen scr;
+            scr.setScreenId(1);
+            list<Seat> seats;
+            scr.setSeats(seats);
+
+            return screens;
+        }
 };
 
 
 int main(){
 
-    Movie m;
-    m.setMovieId(5);
-
-    cout<<m.getMovieId();
+    BookMyShow bookMyShow;
+    bookMyShow.initialize();
+    bookMyShow.createBooking(City::Agra,"Avenger");
 
 
     return 0;
